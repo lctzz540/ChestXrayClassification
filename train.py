@@ -64,17 +64,19 @@ def train_one_epoch(epoch_index, tb_writer):
     return last_loss
 
 
+BATCH_SIZE = 32
+
 train_data = ChestXrayDataset(
     train_filenames, transform=transform, target_transform=target_transform
 )
 val_data = ChestXrayDataset(
     val_filenames, transform=transform, target_transform=target_transform
 )
-training_loader = DataLoader(train_data, batch_size=64, shuffle=True)
-validation_loader = DataLoader(val_data, batch_size=64, shuffle=True)
+training_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True)
+validation_loader = DataLoader(val_data, batch_size=BATCH_SIZE, shuffle=True)
 
 
-model = torch.compile(CNNnet()).to(device)
+model = CNNnet().to(device)
 bce = torch.nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
