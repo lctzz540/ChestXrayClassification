@@ -19,6 +19,7 @@ transform = transforms.Compose(
     [
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ]
 )
 
@@ -54,17 +55,13 @@ def train_one_epoch(epoch_index, tb_writer):
         optimizer.step()
 
         running_loss += loss.item()
-        if i % 100 == 99:
-            last_loss = running_loss / 100
-            print("  batch {} loss: {}".format(i + 1, last_loss))
-            tb_x = epoch_index * len(training_loader) + i + 1
-            tb_writer.add_scalar("Loss/train", last_loss, tb_x)
-            running_loss = 0.0
+        avg_loss = running_loss / len(training_loader)
+        tb_writer.add_scalar("Loss/train", avg_loss, epoch_index + 1)
 
     return last_loss
 
 
-BATCH_SIZE = 32
+BATCH_SIZE = 512
 
 train_data = ChestXrayDataset(
     train_filenames, transform=transform, target_transform=target_transform
@@ -83,8 +80,10 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 writer = SummaryWriter("runs/fashion_trainer_{}".format(timestamp))
 epoch_number = 0
 best_vloss = 1_000_000.0
+no_improvement_count = 0
 
 EPOCHS = 100
+PATIENCE = 10
 
 for epoch in range(EPOCHS):
     print("EPOCH {}:".format(epoch_number + 1))
@@ -116,7 +115,14 @@ for epoch in range(EPOCHS):
 
     if avg_vloss < best_vloss:
         best_vloss = avg_vloss
-        model_path = "model_{}_{}".format(timestamp, epoch_number)
+        model_path = "model_{}_{}.pth".format(timestamp, epoch_number)
         torch.save(model.state_dict(), model_path)
+        no_improvement_count = 0
+    else:
+        no_improvement_count += 1
+
+    if no_improvement_count >= PATIENCE:
+        print(f"Early stopping after {PATIENCE} epochs without improvement.")
+        break
 
     epoch_number += 1
