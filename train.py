@@ -77,7 +77,7 @@ model = CNNnet().to(device)
 bce = torch.nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-writer = SummaryWriter("runs/fashion_trainer_{}".format(timestamp))
+writer = SummaryWriter("runs/chest_xray_trainer_{}".format(timestamp))
 epoch_number = 0
 best_vloss = 1_000_000.0
 no_improvement_count = 0
